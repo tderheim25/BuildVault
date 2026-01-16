@@ -74,18 +74,33 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check user profile and status
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('status, role')
     .eq('id', user.id)
     .single()
 
-  if (!profile) {
-    return NextResponse.redirect(new URL('/pending-approval', request.url))
+  // If profile doesn't exist or there's an error, redirect to pending approval
+  if (!profile || profileError) {
+    // Log error in development (you can check server logs)
+    if (process.env.NODE_ENV === 'development' && profileError) {
+      console.error('[Middleware] Profile query error:', profileError)
+    }
+    // Only redirect if not already on pending-approval page
+    if (pathname !== '/pending-approval') {
+      return NextResponse.redirect(new URL('/pending-approval', request.url))
+    }
+    return response
   }
 
-  // Check if user is approved
-  if (profile.status !== 'approved') {
+  // If user is approved, handle redirects
+  if (profile.status === 'approved') {
+    // If on pending-approval page, redirect to home
+    if (pathname === '/pending-approval') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  } else {
+    // User is not approved, redirect to pending approval
     if (pathname !== '/pending-approval') {
       return NextResponse.redirect(new URL('/pending-approval', request.url))
     }

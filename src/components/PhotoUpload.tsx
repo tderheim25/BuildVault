@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -94,7 +95,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="photos">Upload Photos</Label>
+        <Label htmlFor="photos" className="text-gray-700">Upload Photos</Label>
         <Input
           id="photos"
           type="file"
@@ -102,25 +103,25 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
           multiple
           ref={fileInputRef}
           onChange={handleFileSelect}
-          className="mt-1"
+          className="mt-2 rounded-xl border-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#1e3a8a] file:text-white hover:file:bg-[#1e40af] file:cursor-pointer cursor-pointer"
         />
       </div>
 
       {files.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-4">
           <p className="text-sm text-gray-600">{files.length} file(s) selected</p>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-3">
             {files.map((file, index) => (
-              <div key={index} className="relative">
+              <div key={index} className="relative group">
                 <img
                   src={URL.createObjectURL(file)}
                   alt={file.name}
-                  className="w-full h-24 object-cover rounded border"
+                  className="w-full h-24 object-cover rounded-xl border border-gray-200 group-hover:border-[#1e3a8a]/50 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                  className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-sm transition-all"
                 >
                   ×
                 </button>
@@ -131,7 +132,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
             type="button"
             onClick={handleUpload}
             disabled={uploading}
-            className="w-full"
+            className="w-full bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 ios-button"
           >
             {uploading ? 'Uploading...' : `Upload ${files.length} Photo(s)`}
           </Button>
@@ -139,7 +140,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
       )}
 
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+        <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
           {error}
         </div>
       )}

@@ -1,10 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { PhotoGalleryClient } from './PhotoGalleryClient'
+import { AppLayout } from '@/components/AppLayout'
 
 export default async function ProjectDetailPage({
   params,
@@ -48,44 +47,35 @@ export default async function ProjectDetailPage({
   const canManage = profile.role === 'admin' || profile.role === 'manager'
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-xl font-bold text-gray-900">
-                BuildVault
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/projects">
-                <Button variant="outline">Back to Projects</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppLayout userRole={profile.role}>
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{site.name}</h1>
+          <h1 className="text-4xl font-bold mb-3 text-[#1e3a8a]">
+            {site.name}
+          </h1>
           {site.description && (
-            <p className="text-gray-600 mb-2">{site.description}</p>
+            <p className="text-gray-700 text-lg mb-2">{site.description}</p>
           )}
           {site.address && (
-            <p className="text-sm text-gray-500">{site.address}</p>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>{site.address}</span>
+            </div>
           )}
         </div>
 
         <div className="grid gap-6">
-          <Card>
+          <Card className="ios-card ios-shadow-lg">
             <CardHeader>
-              <CardTitle>Photos</CardTitle>
-              <CardDescription>Upload and manage project photos</CardDescription>
+              <CardTitle className="text-2xl text-[#1e3a8a]">Photos</CardTitle>
+              <CardDescription className="text-gray-600">Upload and manage project photos</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <PhotoUpload siteId={params.id} />
-              <div className="border-t pt-6">
+              <div className="border-t border-gray-100 pt-6">
                 <PhotoGalleryClient 
                   photos={photos || []} 
                   canDelete={canManage}
@@ -94,8 +84,8 @@ export default async function ProjectDetailPage({
             </CardContent>
           </Card>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   )
 }
 

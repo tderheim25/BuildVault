@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AppLayout } from '@/components/AppLayout'
 
 export default function NewProjectPage() {
   const router = useRouter()
@@ -16,6 +17,25 @@ export default function NewProjectPage() {
   const [address, setAddress] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [userRole, setUserRole] = useState<'admin' | 'manager' | 'staff'>('staff')
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+        if (profile) {
+          setUserRole(profile.role as 'admin' | 'manager' | 'staff')
+        }
+      }
+    }
+    fetchUserRole()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,39 +72,28 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-xl font-bold text-gray-900">
-                BuildVault
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/projects">
-                <Button variant="outline">Back to Projects</Button>
-              </Link>
-            </div>
-          </div>
+    <AppLayout userRole={userRole}>
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2 text-[#1e3a8a]">
+            Create New Project
+          </h1>
+          <p className="text-gray-600 text-lg">Add a new construction site/project</p>
         </div>
-      </nav>
-
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card>
+        <Card className="ios-card ios-shadow-lg">
           <CardHeader>
-            <CardTitle>Create New Project</CardTitle>
-            <CardDescription>Add a new construction site/project</CardDescription>
+            <CardTitle className="text-2xl text-[#1e3a8a]">Project Details</CardTitle>
+            <CardDescription className="text-gray-600">Fill in the information below</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
                   {error}
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="name">Project Name *</Label>
+                <Label htmlFor="name" className="text-gray-700">Project Name *</Label>
                 <Input
                   id="name"
                   type="text"
@@ -92,13 +101,14 @@ export default function NewProjectPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  className="rounded-xl border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a]/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-gray-700">Description</Label>
                 <textarea
                   id="description"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-[100px] w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a]/20 focus-visible:ring-offset-2 focus-visible:border-[#1e3a8a] disabled:cursor-not-allowed disabled:opacity-50 transition-all"
                   placeholder="Project description..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -106,28 +116,35 @@ export default function NewProjectPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address" className="text-gray-700">Address</Label>
                 <Input
                   id="address"
                   type="text"
                   placeholder="123 Main St, City, State"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
+                  className="rounded-xl border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a]/20"
                 />
               </div>
             </CardContent>
-            <CardContent className="flex justify-end space-x-4">
+            <CardContent className="flex justify-end space-x-4 pt-6 border-t border-gray-100">
               <Link href="/projects">
-                <Button type="button" variant="outline">Cancel</Button>
+                <Button type="button" variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl">
+                  Cancel
+                </Button>
               </Link>
-              <Button type="submit" disabled={loading}>
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 ios-button"
+              >
                 {loading ? 'Creating...' : 'Create Project'}
               </Button>
             </CardContent>
           </form>
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   )
 }
 

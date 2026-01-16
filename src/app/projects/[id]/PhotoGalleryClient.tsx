@@ -50,3 +50,4 @@ export function PhotoGalleryClient({ photos: initialPhotos, canDelete }: PhotoGa
 }
 
 
+

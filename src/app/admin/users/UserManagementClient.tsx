@@ -70,7 +70,7 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
     <div className="space-y-8">
       {/* Pending Users */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-xl font-semibold mb-4 text-[#1e3a8a]">
           Pending Approval ({pendingUsers.length})
         </h2>
         {pendingUsers.length > 0 ? (
@@ -78,16 +78,16 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
             {pendingUsers.map((user) => (
               <div
                 key={user.id}
-                className="border rounded-lg p-4 flex justify-between items-center"
+                className="ios-card border-gray-200 rounded-xl p-5 flex justify-between items-center hover:shadow-md transition-all duration-200"
               >
                 <div>
-                  <p className="font-medium">{user.full_name || user.email}</p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="font-medium text-gray-900 mb-1">{user.full_name || user.email}</p>
+                  <p className="text-sm text-gray-600">{user.email}</p>
+                  <p className="text-xs text-gray-500 mt-1">
                     Registered: {new Date(user.created_at).toLocaleString()}
                   </p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <select
                     value={user.role}
                     onChange={(e) => {
@@ -96,7 +96,7 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
                         u.id === user.id ? { ...u, role: newRole } : u
                       ))
                     }}
-                    className="px-3 py-1 border rounded text-sm"
+                    className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20"
                     disabled={updating === user.id}
                   >
                     <option value="staff">Staff</option>
@@ -107,6 +107,7 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
                     size="sm"
                     onClick={() => updateUserStatus(user.id, 'approved', user.role)}
                     disabled={updating === user.id}
+                    className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-xl shadow-sm"
                   >
                     {updating === user.id ? '...' : 'Approve'}
                   </Button>
@@ -115,6 +116,7 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
                     variant="destructive"
                     onClick={() => updateUserStatus(user.id, 'rejected')}
                     disabled={updating === user.id}
+                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl"
                   >
                     {updating === user.id ? '...' : 'Reject'}
                   </Button>
@@ -123,13 +125,13 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No pending users</p>
+          <p className="text-gray-600">No pending users</p>
         )}
       </div>
 
       {/* Approved Users */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-xl font-semibold mb-4 text-[#1e3a8a]">
           Approved Users ({approvedUsers.length})
         </h2>
         {approvedUsers.length > 0 ? (
@@ -137,30 +139,30 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
             {approvedUsers.map((user) => (
               <div
                 key={user.id}
-                className="border rounded-lg p-4 flex justify-between items-center"
+                className="ios-card border-gray-200 rounded-xl p-5 flex justify-between items-center hover:shadow-md transition-all duration-200"
               >
                 <div>
-                  <p className="font-medium">
+                  <p className="font-medium text-gray-900 mb-1">
                     {user.full_name || user.email}
-                    <span className="ml-2 text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                    <span className="ml-3 text-xs px-2.5 py-1 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-full border border-[#1e3a8a]/20">
                       {user.role}
                     </span>
                   </p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <p className="text-sm text-gray-600">{user.email}</p>
                   {user.approved_at && (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500 mt-1">
                       Approved: {new Date(user.approved_at).toLocaleString()}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <select
                     value={user.role}
                     onChange={(e) => {
                       const newRole = e.target.value as UserRole
                       updateUserStatus(user.id, 'approved', newRole)
                     }}
-                    className="px-3 py-1 border rounded text-sm"
+                    className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20"
                     disabled={updating === user.id}
                   >
                     <option value="staff">Staff</option>
@@ -172,31 +174,32 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No approved users</p>
+          <p className="text-gray-600">No approved users</p>
         )}
       </div>
 
       {/* Rejected Users */}
       {rejectedUsers.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">
+          <h2 className="text-xl font-semibold mb-4 text-[#1e3a8a]">
             Rejected Users ({rejectedUsers.length})
           </h2>
           <div className="space-y-4">
             {rejectedUsers.map((user) => (
               <div
                 key={user.id}
-                className="border rounded-lg p-4 flex justify-between items-center opacity-60"
+                className="ios-card border-gray-200 rounded-xl p-5 flex justify-between items-center opacity-60 hover:opacity-80 transition-opacity"
               >
                 <div>
-                  <p className="font-medium">{user.full_name || user.email}</p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <p className="font-medium text-gray-900">{user.full_name || user.email}</p>
+                  <p className="text-sm text-gray-600">{user.email}</p>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => updateUserStatus(user.id, 'approved')}
                   disabled={updating === user.id}
+                  className="border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
                 >
                   {updating === user.id ? '...' : 'Approve'}
                 </Button>
