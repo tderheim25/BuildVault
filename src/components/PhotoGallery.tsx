@@ -14,10 +14,10 @@ interface Photo {
 interface PhotoGalleryProps {
   photos: Photo[]
   onDelete?: (photoId: string) => void
-  canDelete?: boolean
+  deletablePhotoIds?: Set<string>
 }
 
-export function PhotoGallery({ photos, onDelete, canDelete = false }: PhotoGalleryProps) {
+export function PhotoGallery({ photos, onDelete, deletablePhotoIds }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
 
   if (photos.length === 0) {
@@ -36,34 +36,38 @@ export function PhotoGallery({ photos, onDelete, canDelete = false }: PhotoGalle
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {photos.map((photo) => (
-          <div
-            key={photo.id}
-            className="relative aspect-square cursor-pointer group"
-            onClick={() => setSelectedPhoto(photo)}
-          >
-            <div className="w-full h-full relative rounded-xl overflow-hidden border border-gray-200 hover:border-[#1e3a8a]/50 transition-all duration-200 ios-shadow hover:shadow-md">
-              <img
-                src={photo.url}
-                alt={photo.file_name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-              />
-              {canDelete && onDelete && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (confirm('Are you sure you want to delete this photo?')) {
-                      onDelete(photo.id)
-                    }
-                  }}
-                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200"
-                >
-                  ×
-                </button>
-              )}
+        {photos.map((photo) => {
+          const canDelete = deletablePhotoIds?.has(photo.id) && onDelete
+          return (
+            <div
+              key={photo.id}
+              className="relative aspect-square cursor-pointer group"
+              onClick={() => setSelectedPhoto(photo)}
+            >
+              <div className="w-full h-full relative rounded-xl overflow-hidden border border-gray-200 hover:border-[#1e3a8a]/50 transition-all duration-200 ios-shadow hover:shadow-md">
+                <img
+                  src={photo.url}
+                  alt={photo.file_name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                />
+                {canDelete && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (confirm('Are you sure you want to delete this photo?')) {
+                        onDelete(photo.id)
+                      }
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200"
+                    title="Delete photo"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <Dialog open={!!selectedPhoto} onOpenChange={() => setSelectedPhoto(null)}>

@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { PhotoUpload } from '@/components/PhotoUpload'
 import { PhotoGalleryClient } from './PhotoGalleryClient'
 import { AppLayout } from '@/components/AppLayout'
 
@@ -40,11 +39,10 @@ export default async function ProjectDetailPage({
 
   const { data: photos } = await supabase
     .from('photos')
-    .select('id, url, file_name, description, created_at')
+    .select('id, url, file_name, description, created_at, uploaded_by')
     .eq('site_id', params.id)
     .order('created_at', { ascending: false })
 
-  const canManage = profile.role === 'admin' || profile.role === 'manager'
   const userName = profile.full_name || 'User'
   const userEmail = profile.email || user.email || ''
 
@@ -73,16 +71,13 @@ export default async function ProjectDetailPage({
           <Card className="ios-card ios-shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-[#1e3a8a]">Photos</CardTitle>
-              <CardDescription className="text-gray-600">Upload and manage project photos</CardDescription>
+              <CardDescription className="text-gray-600">View and manage project photos</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <PhotoUpload siteId={params.id} />
-              <div className="border-t border-gray-100 pt-6">
-                <PhotoGalleryClient 
-                  photos={photos || []} 
-                  canDelete={canManage}
-                />
-              </div>
+            <CardContent>
+              <PhotoGalleryClient 
+                photos={photos || []} 
+                currentUserId={user.id}
+              />
             </CardContent>
           </Card>
         </div>

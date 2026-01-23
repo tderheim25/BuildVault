@@ -20,6 +20,7 @@
     "@supabase/ssr": "^0.1.0",
     "@supabase/supabase-js": "^2.39.0",
     "bootstrap-icons": "^1.13.1",
+    "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.344.0",
@@ -40,5 +41,3 @@
     "typescript": "^5.3.3"
   }
 }
-
-

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import imageCompression from 'browser-image-compression'
 
 interface PhotoUploadProps {
   siteId: string
@@ -16,6 +17,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
   const router = useRouter()
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
+  const [optimizing, setOptimizing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -32,9 +34,50 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
     setFiles(prev => prev.filter((_, i) => i !== index))
   }
 
+  const optimizeImage = async (file: File): Promise<File> => {
+    // Only optimize if file is larger than 500KB
+    if (file.size < 500 * 1024) {
+      return file
+    }
+
+    // Determine if we should preserve PNG format (for transparency)
+    // or convert to JPEG (for photos)
+    const isPNG = file.type === 'image/png'
+    const shouldPreserveFormat = isPNG
+
+    const options = {
+      maxSizeMB: 2, // Maximum size in MB
+      maxWidthOrHeight: 1920, // Maximum width or height (good for web display)
+      useWebWorker: true, // Use web worker for better performance
+      initialQuality: 0.9, // 90% quality - maintains excellent visual quality
+      alwaysKeepResolution: false, // Allow resizing if needed
+      ...(shouldPreserveFormat 
+        ? { fileType: 'image/png' } // Preserve PNG for transparency
+        : { fileType: 'image/jpeg' } // Convert photos to JPEG for better compression
+      ),
+    }
+
+    try {
+      const compressedFile = await imageCompression(file, options)
+      
+      // Log compression ratio for debugging
+      const compressionRatio = ((1 - compressedFile.size / file.size) * 100).toFixed(1)
+      if (compressedFile.size < file.size) {
+        console.log(`Optimized ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB (${compressionRatio}% reduction)`)
+      }
+      
+      return compressedFile
+    } catch (error) {
+      console.error('Image optimization failed:', error)
+      // Return original file if optimization fails
+      return file
+    }
+  }
+
   const handleUpload = async () => {
     if (files.length === 0) return
 
+    setOptimizing(true)
     setUploading(true)
     setError(null)
 
@@ -46,8 +89,16 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
         throw new Error('Not authenticated')
       }
 
-      const uploadPromises = files.map(async (file) => {
-        const fileExt = file.name.split('.').pop()
+      // Optimize all images first
+      const optimizedFiles = await Promise.all(
+        files.map(file => optimizeImage(file))
+      )
+
+      setOptimizing(false)
+
+      const uploadPromises = optimizedFiles.map(async (file, index) => {
+        // Use .jpg extension for optimized files to ensure proper MIME type
+        const fileExt = file.type === 'image/jpeg' ? 'jpg' : file.name.split('.').pop()
         const fileName = `${Math.random()}.${fileExt}`
         const filePath = `${siteId}/${fileName}`
 
@@ -63,15 +114,15 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
           .from('project-photos')
           .getPublicUrl(filePath)
 
-        // Insert photo record
+        // Insert photo record with optimized file size
         const { error: insertError } = await supabase
           .from('photos')
           .insert({
             site_id: siteId,
             url: publicUrl,
-            file_name: file.name,
-            file_size: file.size,
-            mime_type: file.type,
+            file_name: files[index].name, // Keep original filename
+            file_size: file.size, // Use optimized file size
+            mime_type: file.type, // Use optimized MIME type
             uploaded_by: user.id,
           })
 
@@ -88,6 +139,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
     } catch (err: any) {
       setError(err.message || 'Failed to upload photos')
     } finally {
+      setOptimizing(false)
       setUploading(false)
     }
   }
@@ -131,10 +183,14 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
           <Button
             type="button"
             onClick={handleUpload}
-            disabled={uploading}
+            disabled={uploading || optimizing}
             className="w-full bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 ios-button"
           >
-            {uploading ? 'Uploading...' : `Upload ${files.length} Photo(s)`}
+            {optimizing 
+              ? 'Optimizing...' 
+              : uploading 
+                ? 'Uploading...' 
+                : `Upload ${files.length} Photo(s)`}
           </Button>
         </div>
       )}
