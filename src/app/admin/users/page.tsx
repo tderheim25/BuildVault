@@ -32,11 +32,15 @@ export default async function AdminUsersPage() {
     .select('id, email, full_name, role, status, created_at, approved_by, approved_at')
     .order('created_at', { ascending: false })
 
+  const { count: totalSites } = await supabase
+    .from('sites')
+    .select('*', { count: 'exact', head: true })
+
   const userName = profile.full_name || 'User'
   const userEmail = profile.email || user.email || ''
 
   return (
-    <AppLayout userRole={profile.role} userName={userName} userEmail={userEmail}>
+    <AppLayout userRole={profile.role} userName={userName} userEmail={userEmail} projectCount={totalSites || 0}>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 text-[#1e3a8a]">

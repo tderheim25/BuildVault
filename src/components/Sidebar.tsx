@@ -15,9 +15,10 @@ import { cn } from '@/lib/utils'
 
 interface SidebarProps {
   userRole: 'admin' | 'manager' | 'staff'
+  projectCount?: number
 }
 
-export function Sidebar({ userRole }: SidebarProps) {
+export function Sidebar({ userRole, projectCount = 0 }: SidebarProps) {
   const pathname = usePathname()
 
   const isAdminOrManager = userRole === 'admin' || userRole === 'manager'
@@ -96,7 +97,7 @@ export function Sidebar({ userRole }: SidebarProps) {
           <div className="px-4 py-4">
             <div className="bg-gradient-to-br from-indigo-600 to-blue-600 rounded-xl p-4 text-white">
               <p className="text-xs font-medium opacity-90 mb-1">CURRENT PROJECTS</p>
-              <p className="text-2xl font-bold">0</p>
+              <p className="text-2xl font-bold">{projectCount}</p>
             </div>
           </div>
 

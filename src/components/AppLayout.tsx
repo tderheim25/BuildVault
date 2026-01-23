@@ -7,12 +7,13 @@ interface AppLayoutProps {
   userRole: 'admin' | 'manager' | 'staff'
   userName: string
   userEmail: string
+  projectCount?: number
 }
 
-export function AppLayout({ children, userRole, userName, userEmail }: AppLayoutProps) {
+export function AppLayout({ children, userRole, userName, userEmail, projectCount = 0 }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-[#f5f6fa]">
-      <Sidebar userRole={userRole} />
+      <Sidebar userRole={userRole} projectCount={projectCount} />
       <main className="ml-72">
         {/* Header with User Menu */}
         <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-6 lg:px-8 py-4">

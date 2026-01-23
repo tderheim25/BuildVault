@@ -20,6 +20,7 @@ export default function NewProjectPage() {
   const [userRole, setUserRole] = useState<'admin' | 'manager' | 'staff'>('staff')
   const [userName, setUserName] = useState<string>('User')
   const [userEmail, setUserEmail] = useState<string>('')
+  const [projectCount, setProjectCount] = useState<number>(0)
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -36,6 +37,12 @@ export default function NewProjectPage() {
           setUserName(profile.full_name || 'User')
           setUserEmail(profile.email || user.email || '')
         }
+
+        // Fetch project count
+        const { count } = await supabase
+          .from('sites')
+          .select('*', { count: 'exact', head: true })
+        setProjectCount(count || 0)
       }
     }
     fetchUserRole()
@@ -76,7 +83,7 @@ export default function NewProjectPage() {
   }
 
   return (
-    <AppLayout userRole={userRole} userName={userName} userEmail={userEmail}>
+    <AppLayout userRole={userRole} userName={userName} userEmail={userEmail} projectCount={projectCount}>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 text-[#1e3a8a]">

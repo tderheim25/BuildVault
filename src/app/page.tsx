@@ -47,7 +47,7 @@ export default async function HomePage() {
   const userEmail = profile.email || user.email || ''
 
   return (
-    <AppLayout userRole={profile.role} userName={userName} userEmail={userEmail}>
+    <AppLayout userRole={profile.role} userName={userName} userEmail={userEmail} projectCount={totalSites || 0}>
       <div className="max-w-[1600px] mx-auto">
         {/* Gradient Header */}
         <div className="gradient-header rounded-2xl p-6 mb-6 text-white">
