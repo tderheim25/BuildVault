@@ -1,16 +1,29 @@
 import { ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
+import { UserMenu } from './UserMenu'
 
 interface AppLayoutProps {
   children: ReactNode
   userRole: 'admin' | 'manager' | 'staff'
+  userName: string
+  userEmail: string
 }
 
-export function AppLayout({ children, userRole }: AppLayoutProps) {
+export function AppLayout({ children, userRole, userName, userEmail }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-[#f5f6fa]">
       <Sidebar userRole={userRole} />
       <main className="ml-72">
+        {/* Header with User Menu */}
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-6 lg:px-8 py-4">
+          <div className="flex justify-end items-center">
+            <UserMenu 
+              userName={userName}
+              userEmail={userEmail}
+              userRole={userRole}
+            />
+          </div>
+        </header>
         <div className="p-6 lg:p-8">
           {children}
         </div>

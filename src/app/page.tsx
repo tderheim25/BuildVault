@@ -17,7 +17,7 @@ export default async function HomePage() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('role, status, full_name')
+    .select('role, status, full_name, email')
     .eq('id', user.id)
     .single()
 
@@ -44,9 +44,10 @@ export default async function HomePage() {
   const timeStr = today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
   const userName = profile.full_name || 'User'
+  const userEmail = profile.email || user.email || ''
 
   return (
-    <AppLayout userRole={profile.role}>
+    <AppLayout userRole={profile.role} userName={userName} userEmail={userEmail}>
       <div className="max-w-[1600px] mx-auto">
         {/* Gradient Header */}
         <div className="gradient-header rounded-2xl p-6 mb-6 text-white">

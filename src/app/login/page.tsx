@@ -14,11 +14,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [resendingEmail, setResendingEmail] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
+    setEmailSent(false)
 
     try {
       const supabase = createClient()
@@ -27,7 +30,14 @@ export default function LoginPage() {
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        // Check if it's an email confirmation error
+        if (error.message?.toLowerCase().includes('email not confirmed') || 
+            error.message?.toLowerCase().includes('email_not_confirmed')) {
+          throw new Error('Email not confirmed')
+        }
+        throw error
+      }
 
       // Use window.location for full page reload to ensure session is established
       // This prevents redirect loops with middleware
@@ -35,6 +45,33 @@ export default function LoginPage() {
     } catch (error: any) {
       setError(error.message || 'An error occurred')
       setLoading(false)
+    }
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setError('Please enter your email address first')
+      return
+    }
+
+    setResendingEmail(true)
+    setError(null)
+    setEmailSent(false)
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      })
+
+      if (error) throw error
+
+      setEmailSent(true)
+    } catch (error: any) {
+      setError(error.message || 'Failed to resend confirmation email')
+    } finally {
+      setResendingEmail(false)
     }
   }
 
@@ -62,9 +99,36 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-5">
               {error && (
-                <div className="flex items-center gap-2 p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{error}</span>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                  {error.toLowerCase().includes('email not confirmed') && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                      <p className="text-sm text-blue-800 mb-3">
+                        Need to resend the confirmation email?
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={handleResendConfirmation}
+                        disabled={resendingEmail || emailSent}
+                        variant="outline"
+                        className="w-full text-sm"
+                      >
+                        {resendingEmail ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : emailSent ? (
+                          '✓ Email sent! Check your inbox'
+                        ) : (
+                          'Resend Confirmation Email'
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
               

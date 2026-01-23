@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { LogoutButton } from '@/components/LogoutButton'
 import { 
   LayoutDashboard, 
   FolderKanban, 
@@ -54,7 +53,7 @@ export function Sidebar({ userRole }: SidebarProps) {
     <aside className="fixed left-0 top-0 z-40 h-screen w-72 bg-white border-r border-gray-200 dashboard-shadow">
       <div className="flex h-full flex-col">
         {/* Logo */}
-        <div className="flex h-20 items-center border-b border-gray-100 px-6">
+        <div className="flex h-20 items-center border-b border-gray-100 px-6 flex-shrink-0">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl gradient-primary shadow-lg group-hover:shadow-xl transition-all duration-200">
               <Building2 className="h-7 w-7 text-white" />
@@ -65,8 +64,8 @@ export function Sidebar({ userRole }: SidebarProps) {
           </Link>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-2 px-4 py-6">
+        {/* Navigation - scrollable */}
+        <nav className="flex-1 space-y-2 px-4 py-6 overflow-y-auto min-h-0">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href || 
@@ -91,40 +90,27 @@ export function Sidebar({ userRole }: SidebarProps) {
           })}
         </nav>
 
-        {/* User Profile Section */}
-        <div className="border-t border-gray-100 px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400 flex items-center justify-center text-white font-semibold">
-              U
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">User Name</p>
-              <p className="text-xs text-gray-500">{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</p>
+        {/* Bottom Section - always visible at bottom */}
+        <div className="flex-shrink-0 border-t border-gray-100 mt-auto">
+          {/* Current Projects Card */}
+          <div className="px-4 py-4">
+            <div className="bg-gradient-to-br from-indigo-600 to-blue-600 rounded-xl p-4 text-white">
+              <p className="text-xs font-medium opacity-90 mb-1">CURRENT PROJECTS</p>
+              <p className="text-2xl font-bold">0</p>
             </div>
           </div>
-          
-          {/* Current Price Card */}
-          <div className="bg-gradient-to-br from-indigo-600 to-blue-600 rounded-xl p-4 text-white mb-4">
-            <p className="text-xs font-medium opacity-90 mb-1">CURRENT PROJECTS</p>
-            <p className="text-2xl font-bold">0</p>
-          </div>
-        </div>
 
-        {/* New Project Button (for admins/managers) */}
-        {isAdminOrManager && (
-          <div className="border-t border-gray-100 px-4 py-4">
-            <Link href="/projects/new">
-              <Button className="w-full gap-2 h-12 gradient-primary hover:opacity-90 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 dashboard-button">
-                <Plus className="h-5 w-5" />
-                New Project
-              </Button>
-            </Link>
-          </div>
-        )}
-
-        {/* Logout */}
-        <div className="border-t border-gray-100 px-4 py-4">
-          <LogoutButton />
+          {/* New Project Button (for admins/managers) */}
+          {isAdminOrManager && (
+            <div className="border-t border-gray-100 px-4 py-4">
+              <Link href="/projects/new">
+                <Button className="w-full gap-2 h-12 gradient-primary hover:opacity-90 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 dashboard-button">
+                  <Plus className="h-5 w-5" />
+                  New Project
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </aside>

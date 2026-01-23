@@ -16,7 +16,7 @@ export default async function ProjectsPage() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('role, status')
+    .select('role, status, full_name, email')
     .eq('id', user.id)
     .single()
 
@@ -29,8 +29,11 @@ export default async function ProjectsPage() {
     .select('id, name, description, created_at')
     .order('created_at', { ascending: false })
 
+  const userName = profile.full_name || 'User'
+  const userEmail = profile.email || user.email || ''
+
   return (
-    <AppLayout userRole={profile.role}>
+    <AppLayout userRole={profile.role} userName={userName} userEmail={userEmail}>
       <div className="max-w-[1600px] mx-auto">
         <div className="mb-8 flex justify-between items-center">
           <div>

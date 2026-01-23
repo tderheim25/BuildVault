@@ -18,6 +18,8 @@ export default function NewProjectPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [userRole, setUserRole] = useState<'admin' | 'manager' | 'staff'>('staff')
+  const [userName, setUserName] = useState<string>('User')
+  const [userEmail, setUserEmail] = useState<string>('')
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -26,11 +28,13 @@ export default function NewProjectPage() {
       if (user) {
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('role')
+          .select('role, full_name, email')
           .eq('id', user.id)
           .single()
         if (profile) {
           setUserRole(profile.role as 'admin' | 'manager' | 'staff')
+          setUserName(profile.full_name || 'User')
+          setUserEmail(profile.email || user.email || '')
         }
       }
     }
@@ -72,7 +76,7 @@ export default function NewProjectPage() {
   }
 
   return (
-    <AppLayout userRole={userRole}>
+    <AppLayout userRole={userRole} userName={userName} userEmail={userEmail}>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 text-[#1e3a8a]">

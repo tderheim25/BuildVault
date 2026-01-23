@@ -72,3 +72,4 @@ Browse all available icons at: https://icons.getbootstrap.com/
 Just use the icon name without the "bi-" prefix when using the component, or include "bi-" when using the class directly.
 
 
+

@@ -11,6 +11,8 @@ import { Camera, Upload, X, Check } from 'lucide-react'
 export default function CapturePage() {
   const router = useRouter()
   const [userRole, setUserRole] = useState<'admin' | 'manager' | 'staff'>('staff')
+  const [userName, setUserName] = useState<string>('User')
+  const [userEmail, setUserEmail] = useState<string>('')
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([])
   const [selectedProject, setSelectedProject] = useState<string>('')
   const [captureMode, setCaptureMode] = useState<'camera' | 'upload' | null>(null)
@@ -39,7 +41,7 @@ export default function CapturePage() {
 
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('role, status')
+        .select('role, status, full_name, email')
         .eq('id', user.id)
         .single()
 
@@ -47,6 +49,10 @@ export default function CapturePage() {
         router.push('/pending-approval')
         return
       }
+
+      setUserRole(profile.role)
+      setUserName(profile.full_name || 'User')
+      setUserEmail(profile.email || user.email || '')
 
       setUserRole(profile.role as 'admin' | 'manager' | 'staff')
 
@@ -316,7 +322,7 @@ export default function CapturePage() {
   }, [stream])
 
   return (
-    <AppLayout userRole={userRole}>
+    <AppLayout userRole={userRole} userName={userName} userEmail={userEmail}>
       <div className="max-w-[1600px] mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 text-gradient">
