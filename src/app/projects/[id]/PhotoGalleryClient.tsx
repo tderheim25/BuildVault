@@ -12,16 +12,31 @@ interface Photo {
   description?: string | null
   created_at: string
   uploaded_by: string
+  uploader?: {
+    full_name: string | null
+    email: string
+  }
 }
 
 interface PhotoGalleryClientProps {
   photos: Photo[]
   currentUserId: string
+  currentUserRole: 'admin' | 'manager' | 'staff'
+  siteOwnerId: string
+  siteId: string
 }
 
-export function PhotoGalleryClient({ photos: initialPhotos, currentUserId }: PhotoGalleryClientProps) {
+export function PhotoGalleryClient({
+  photos: initialPhotos,
+  currentUserId,
+  currentUserRole,
+  siteOwnerId,
+  siteId,
+}: PhotoGalleryClientProps) {
   const router = useRouter()
   const [photos, setPhotos] = useState(initialPhotos)
+
+  const canDeleteAnyInProject = currentUserRole === 'admin' || currentUserRole === 'manager' || siteOwnerId === currentUserId
 
   const handleDelete = async (photoId: string) => {
     try {
@@ -33,16 +48,15 @@ export function PhotoGalleryClient({ photos: initialPhotos, currentUserId }: Pho
         throw new Error('Photo not found')
       }
 
-      // Verify the current user is the uploader
-      if (photo.uploaded_by !== currentUserId) {
-        alert('You can only delete photos that you uploaded')
+      const canDeleteThis = canDeleteAnyInProject || photo.uploaded_by === currentUserId
+      if (!canDeleteThis) {
+        alert('You do not have permission to delete this photo')
         return
       }
 
       // Extract file path from URL to delete from storage
       const urlParts = photo.url.split('/')
       const fileName = urlParts[urlParts.length - 1]
-      const siteId = urlParts[urlParts.length - 2]
       const filePath = `${siteId}/${fileName}`
 
       // Delete from storage
@@ -60,7 +74,6 @@ export function PhotoGalleryClient({ photos: initialPhotos, currentUserId }: Pho
         .from('photos')
         .delete()
         .eq('id', photoId)
-        .eq('uploaded_by', currentUserId) // Extra safety check
 
       if (error) throw error
 
@@ -75,7 +88,7 @@ export function PhotoGalleryClient({ photos: initialPhotos, currentUserId }: Pho
   // Create a map of which photos can be deleted by the current user
   const deletablePhotos = new Set(
     photos
-      .filter(photo => photo.uploaded_by === currentUserId)
+      .filter(photo => canDeleteAnyInProject || photo.uploaded_by === currentUserId)
       .map(photo => photo.id)
   )
 

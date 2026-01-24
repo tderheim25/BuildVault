@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -268,10 +269,11 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
       stopCamera()
       setSuccess(true)
       
-      setTimeout(() => {
-        setSuccess(false)
-        router.push(`/projects/${selectedProject}`)
-      }, 2000)
+      // Removed automatic redirect
+      // setTimeout(() => {
+      //   setSuccess(false)
+      //   router.push(`/projects/${selectedProject}`)
+      // }, 2000)
     } catch (err: any) {
       setError(err.message || 'Failed to upload photos')
     } finally {
@@ -341,7 +343,10 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
                     <span className="text-base sm:text-lg font-semibold">Open Camera</span>
                   </Button>
                   <Button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => {
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                      fileInputRef.current?.click();
+                    }}
                     variant="outline"
                     className="h-24 sm:h-32 flex-col gap-2 sm:gap-3 border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 rounded-xl transition-all duration-200"
                   >
@@ -349,14 +354,6 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
                     <span className="text-base sm:text-lg font-semibold text-gray-700">Upload Photos</span>
                   </Button>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
               </CardContent>
             </Card>
           )}
@@ -515,7 +512,10 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
                   ))}
                 </div>
                 <Button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                    fileInputRef.current?.click();
+                  }}
                   variant="outline"
                   className="w-full mt-4 rounded-xl"
                 >
@@ -596,25 +596,43 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
                 </div>
               )}
               {success && (
-                <div className="p-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2">
-                  <Check className="h-5 w-5" />
-                  <span>Photos uploaded successfully! Redirecting...</span>
+                <div className="space-y-4">
+                  <div className="p-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2">
+                    <Check className="h-5 w-5" />
+                    <span>Photos uploaded successfully!</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => setSuccess(false)}
+                      variant="outline"
+                      className="flex-1 rounded-xl"
+                    >
+                      Upload More
+                    </Button>
+                    <Link href={`/projects/${selectedProject}`} className="flex-1">
+                      <Button className="w-full gradient-primary text-white rounded-xl shadow-md">
+                        Go to Project
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               )}
-              <Button
-                onClick={handleUpload}
-                disabled={uploading || (!capturedImage && capturedImages.length === 0 && uploadedFiles.length === 0) || !selectedProject}
-                className="w-full gradient-primary hover:opacity-90 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
-              >
-                {uploading ? (
-                  <>Uploading...</>
-                ) : (
-                  <>
-                    <Upload className="h-5 w-5 mr-2" />
-                    Upload {(capturedImage ? 1 : 0) + capturedImages.length + uploadedFiles.length} Photo(s)
-                  </>
-                )}
-              </Button>
+              {!success && (
+                <Button
+                  onClick={handleUpload}
+                  disabled={uploading || (!capturedImage && capturedImages.length === 0 && uploadedFiles.length === 0) || !selectedProject}
+                  className="w-full gradient-primary hover:opacity-90 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  {uploading ? (
+                    <>Uploading...</>
+                  ) : (
+                    <>
+                      <Upload className="h-5 w-5 mr-2" />
+                      Upload {(capturedImage ? 1 : 0) + capturedImages.length + uploadedFiles.length} Photo(s)
+                    </>
+                  )}
+                </Button>
+              )}
               {projects.length === 0 && (
                 <p className="text-sm text-gray-500 text-center">
                   No projects available. Create a project first.
@@ -624,6 +642,16 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
           </Card>
         </div>
       </div>
+      
+      {/* File input - always available for file selection */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
     </div>
   )
 }

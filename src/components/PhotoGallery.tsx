@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { BootstrapIcon } from '@/components/ui/bootstrap-icon'
 
 interface Photo {
   id: string
@@ -10,6 +11,10 @@ interface Photo {
   file_name: string
   description?: string | null
   created_at: string
+  uploader?: {
+    full_name: string | null
+    email: string
+  }
 }
 
 interface PhotoGalleryProps {
@@ -64,7 +69,7 @@ export function PhotoGallery({ photos, onDelete, deletablePhotoIds }: PhotoGalle
                     className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200"
                     title="Delete photo"
                   >
-                    ×
+                    <BootstrapIcon name="trash" size={14} className="leading-none" aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -77,7 +82,9 @@ export function PhotoGallery({ photos, onDelete, deletablePhotoIds }: PhotoGalle
         {selectedPhoto && (
           <DialogContent className="max-w-4xl ios-card ios-shadow-lg mx-4 sm:mx-auto">
             <DialogHeader>
-              <DialogTitle className="text-[#1e3a8a] text-base sm:text-lg break-words">{selectedPhoto.file_name}</DialogTitle>
+              <DialogTitle className="text-[#1e3a8a] text-base sm:text-lg break-words">
+                Uploaded by: {selectedPhoto.uploader?.full_name || selectedPhoto.uploader?.email || 'Unknown User'}
+              </DialogTitle>
             </DialogHeader>
             <div className="relative w-full h-[40vh] sm:h-[50vh] lg:h-[60vh] rounded-xl overflow-hidden border border-gray-200">
               <Image

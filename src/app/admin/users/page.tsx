@@ -35,6 +35,11 @@ export default async function AdminUsersPage() {
     .select('id, email, full_name, role, status, created_at, approved_by, approved_at')
     .order('created_at', { ascending: false })
 
+  const { data: sites } = await supabase
+    .from('sites')
+    .select('id, name')
+    .order('created_at', { ascending: false })
+
   const { count: totalSites } = await supabase
     .from('sites')
     .select('*', { count: 'exact', head: true })
@@ -58,7 +63,12 @@ export default async function AdminUsersPage() {
             <CardDescription className="text-gray-600">Approve or reject user registrations</CardDescription>
           </CardHeader>
           <CardContent>
-            <UserManagementClient initialUsers={users || []} currentUserId={user.id} />
+            <UserManagementClient
+              initialUsers={users || []}
+              initialSites={sites || []}
+              currentUserId={user.id}
+              currentUserRole={typedProfile.role as 'admin' | 'manager'}
+            />
           </CardContent>
         </Card>
       </div>

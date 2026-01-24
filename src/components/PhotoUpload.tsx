@@ -2,11 +2,13 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Check } from 'lucide-react'
 import { Database } from '@/types/database'
 import imageCompression from 'browser-image-compression'
 
@@ -23,6 +25,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [optimizing, setOptimizing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,6 +34,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
       // Filter to only image files
       const imageFiles = selectedFiles.filter(file => file.type.startsWith('image/'))
       setFiles(prev => [...prev, ...imageFiles])
+      setSuccess(false)
     }
   }
 
@@ -84,6 +88,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
     setOptimizing(true)
     setUploading(true)
     setError(null)
+    setSuccess(false)
 
     try {
       const supabase = createClient()
@@ -127,7 +132,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
           mime_type: file.type, // Use optimized MIME type
           uploaded_by: user.id,
         } as PhotoInsert
-        const { error: insertError } = await supabase
+        const { error: insertError = null } = await supabase
           .from('photos')
           .insert(photoData as any)
 
@@ -139,6 +144,7 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+      setSuccess(true)
       onUploadComplete?.()
       router.refresh()
     } catch (err: any) {
@@ -205,6 +211,20 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
       {error && (
         <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="space-y-4">
+          <div className="p-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2">
+            <Check className="h-5 w-5" />
+            <span>Photos uploaded successfully!</span>
+          </div>
+          <Link href={`/projects/${siteId}`} className="block">
+            <Button className="w-full gradient-primary text-white rounded-xl shadow-md">
+              Go to Project Folder
+            </Button>
+          </Link>
         </div>
       )}
     </div>

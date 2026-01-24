@@ -32,11 +32,11 @@ export default async function ProjectDetailPage({
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, name, description, address, created_at')
+    .select('id, name, description, address, created_at, created_by')
     .eq('id', params.id)
     .single()
 
-  type SiteData = { id: string; name: string; description: string | null; address: string | null; created_at: string } | null
+  type SiteData = { id: string; name: string; description: string | null; address: string | null; created_at: string; created_by: string } | null
   const typedSite = site as SiteData
 
   if (!typedSite) {
@@ -48,6 +48,30 @@ export default async function ProjectDetailPage({
     .select('id, url, file_name, description, created_at, uploaded_by')
     .eq('site_id', params.id)
     .order('created_at', { ascending: false })
+
+  // Fetch uploader information for all photos
+  const uploaderIds = [...new Set(photos?.map(p => p.uploaded_by) || [])]
+  let uploadersMap: Record<string, { full_name: string | null; email: string }> = {}
+  
+  if (uploaderIds.length > 0) {
+    const { data: uploaders } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, email')
+      .in('id', uploaderIds)
+    
+    if (uploaders) {
+      uploadersMap = uploaders.reduce((acc, uploader) => {
+        acc[uploader.id] = { full_name: uploader.full_name, email: uploader.email }
+        return acc
+      }, {} as Record<string, { full_name: string | null; email: string }>)
+    }
+  }
+
+  // Enrich photos with uploader info
+  const enrichedPhotos = photos?.map(photo => ({
+    ...photo,
+    uploader: uploadersMap[photo.uploaded_by] || { full_name: null, email: 'Unknown' }
+  })) || []
 
   const { count: totalSites } = await supabase
     .from('sites')
@@ -85,8 +109,11 @@ export default async function ProjectDetailPage({
             </CardHeader>
             <CardContent>
               <PhotoGalleryClient 
-                photos={photos || []} 
+                photos={enrichedPhotos} 
                 currentUserId={user.id}
+                currentUserRole={typedProfile.role as 'admin' | 'manager' | 'staff'}
+                siteOwnerId={typedSite.created_by}
+                siteId={typedSite.id}
               />
             </CardContent>
           </Card>

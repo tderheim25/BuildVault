@@ -9,7 +9,7 @@ export type Json =
 export type UserRole = 'admin' | 'manager' | 'staff'
 export type UserStatus = 'pending' | 'approved' | 'rejected'
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       user_profiles: {
@@ -46,6 +46,28 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: any[]
+      }
+      user_site_access: {
+        Row: {
+          user_id: string
+          site_id: string
+          assigned_by: string | null
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          site_id: string
+          assigned_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          site_id?: string
+          assigned_by?: string | null
+          created_at?: string
+        }
+        Relationships: any[]
       }
       sites: {
         Row: {
@@ -75,6 +97,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: any[]
       }
       photos: {
         Row: {
@@ -110,6 +133,46 @@ export interface Database {
           uploaded_by?: string
           created_at?: string
         }
+        Relationships: any[]
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          message: string
+          site_id: string | null
+          photo_id: string | null
+          uploaded_by: string | null
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type?: string
+          title: string
+          message: string
+          site_id?: string | null
+          photo_id?: string | null
+          uploaded_by?: string | null
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          title?: string
+          message?: string
+          site_id?: string | null
+          photo_id?: string | null
+          uploaded_by?: string | null
+          read_at?: string | null
+          created_at?: string
+        }
+        Relationships: any[]
       }
     }
     Views: {
@@ -121,6 +184,9 @@ export interface Database {
     Enums: {
       user_role: UserRole
       user_status: UserStatus
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }

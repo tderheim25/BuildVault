@@ -3,6 +3,7 @@
 import { ReactNode, useState } from 'react'
 import { Sidebar, MobileMenuButton } from './Sidebar'
 import { UserMenu } from './UserMenu'
+import { NotificationDropdown } from './NotificationDropdown'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -23,16 +24,19 @@ export function AppLayout({ children, userRole, userName, userEmail, projectCoun
         isMobileOpen={isMobileMenuOpen}
         onMobileClose={() => setIsMobileMenuOpen(false)}
       />
-      <main className="lg:ml-72">
+      <main className="lg:ml-72 min-h-screen flex flex-col">
         {/* Header with User Menu */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 h-16 flex items-center shrink-0">
+          <div className="flex justify-between items-center w-full">
             <MobileMenuButton onClick={() => setIsMobileMenuOpen(true)} />
-            <UserMenu 
-              userName={userName}
-              userEmail={userEmail}
-              userRole={userRole}
-            />
+            <div className="flex-1 flex justify-end items-center gap-3">
+              <NotificationDropdown userRole={userRole} />
+              <UserMenu 
+                userName={userName}
+                userEmail={userEmail}
+                userRole={userRole}
+              />
+            </div>
           </div>
         </header>
         <div className="p-4 sm:p-6 lg:p-8">

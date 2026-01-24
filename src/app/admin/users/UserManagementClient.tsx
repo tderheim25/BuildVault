@@ -2,8 +2,24 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { MoreVertical, Pencil, Trash2, Building2, Calendar, MapPin, Search } from 'lucide-react'
 import { UserRole, UserStatus, Database } from '@/types/database'
 
 interface User {
@@ -17,21 +33,71 @@ interface User {
   approved_at: string | null
 }
 
-interface UserManagementClientProps {
-  initialUsers: User[]
-  currentUserId: string
+interface Site {
+  id: string
+  name: string
 }
 
-export function UserManagementClient({ initialUsers, currentUserId }: UserManagementClientProps) {
+interface UserManagementClientProps {
+  initialUsers: User[]
+  initialSites: Site[]
+  currentUserId: string
+  currentUserRole: 'admin' | 'manager'
+}
+
+export function UserManagementClient({
+  initialUsers,
+  initialSites,
+  currentUserId,
+  currentUserRole,
+}: UserManagementClientProps) {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>(initialUsers)
+  const [sites] = useState<Site[]>(initialSites)
+  const [search, setSearch] = useState('')
   const [updating, setUpdating] = useState<string | null>(null)
+
+  const [editOpen, setEditOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editFullName, setEditFullName] = useState<string>('')
+  const [editRole, setEditRole] = useState<UserRole>('staff')
+  const [editStatus, setEditStatus] = useState<UserStatus>('pending')
+  const [editSiteIds, setEditSiteIds] = useState<Set<string>>(new Set())
+  const [availableFilter, setAvailableFilter] = useState('')
+  const [assignedFilter, setAssignedFilter] = useState('')
+  const [selectedAvailable, setSelectedAvailable] = useState<Set<string>>(new Set())
+  const [selectedAssigned, setSelectedAssigned] = useState<Set<string>>(new Set())
+  const [loadingAccess, setLoadingAccess] = useState(false)
+
+  const formatApiError = (data: any, fallback: string) => {
+    const message = data?.error || fallback
+    const debug = data?.debug
+    if (!debug) return message
+    return `${message}\n\nDebug:\n${JSON.stringify(debug, null, 2)}`
+  }
+
+  const patchUser = async (
+    userId: string,
+    payload: {
+      full_name?: string
+      role?: UserRole
+      status?: UserStatus
+      siteIds?: string[]
+    }
+  ) => {
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(formatApiError(data, 'Request failed'))
+    return data
+  }
 
   const updateUserStatus = async (userId: string, status: UserStatus, role?: UserRole) => {
     setUpdating(userId)
     try {
-      const supabase = createClient()
-      
       const updateData: Database['public']['Tables']['user_profiles']['Update'] = {
         status,
         approved_by: currentUserId,
@@ -42,12 +108,7 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
         updateData.role = role
       }
 
-      const { error } = await (supabase
-        .from('user_profiles') as any)
-        .update(updateData)
-        .eq('id', userId)
-
-      if (error) throw error
+      await patchUser(userId, { status, role })
 
       setUsers(prev => prev.map(user => 
         user.id === userId 
@@ -62,12 +123,174 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
     }
   }
 
-  const pendingUsers = users.filter(u => u.status === 'pending')
-  const approvedUsers = users.filter(u => u.status === 'approved')
-  const rejectedUsers = users.filter(u => u.status === 'rejected')
+  const normalizedSearch = search.trim().toLowerCase()
+  const filteredUsers = normalizedSearch
+    ? users.filter(u => {
+        const haystack = `${u.full_name || ''} ${u.email} ${u.role} ${u.status}`.toLowerCase()
+        return haystack.includes(normalizedSearch)
+      })
+    : users
+
+  const pendingUsers = filteredUsers.filter(u => u.status === 'pending')
+  const approvedUsers = filteredUsers.filter(u => u.status === 'approved')
+  const rejectedUsers = filteredUsers.filter(u => u.status === 'rejected')
+
+  const openEdit = async (user: User) => {
+    setEditingUser(user)
+    setEditFullName(user.full_name || '')
+    setEditRole(user.role)
+    setEditStatus(user.status)
+    setEditSiteIds(new Set())
+    setAvailableFilter('')
+    setAssignedFilter('')
+    setSelectedAvailable(new Set())
+    setSelectedAssigned(new Set())
+    setEditOpen(true)
+
+    setLoadingAccess(true)
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, { method: 'GET' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(formatApiError(data, 'Failed to load user'))
+      const siteIds: string[] = Array.isArray(data.siteIds) ? data.siteIds : []
+      setEditSiteIds(new Set(siteIds))
+    } catch (e: any) {
+      console.error(e)
+      alert(e?.message || 'Failed to load user access')
+    } finally {
+      setLoadingAccess(false)
+    }
+  }
+
+  const availableSites = sites.filter(s => !editSiteIds.has(s.id))
+  const assignedSites = sites.filter(s => editSiteIds.has(s.id))
+
+  const filteredAvailable = (() => {
+    const q = availableFilter.trim().toLowerCase()
+    if (!q) return availableSites
+    return availableSites.filter(s => s.name.toLowerCase().includes(q))
+  })()
+
+  const filteredAssigned = (() => {
+    const q = assignedFilter.trim().toLowerCase()
+    if (!q) return assignedSites
+    return assignedSites.filter(s => s.name.toLowerCase().includes(q))
+  })()
+
+  const moveToAssigned = () => {
+    setEditSiteIds(prev => {
+      const next = new Set(prev)
+      for (const id of selectedAvailable) next.add(id)
+      return next
+    })
+    setSelectedAvailable(new Set())
+  }
+
+  const moveToAvailable = () => {
+    setEditSiteIds(prev => {
+      const next = new Set(prev)
+      for (const id of selectedAssigned) next.delete(id)
+      return next
+    })
+    setSelectedAssigned(new Set())
+  }
+
+  const assignAllFiltered = () => {
+    setEditSiteIds(prev => {
+      const next = new Set(prev)
+      for (const s of filteredAvailable) next.add(s.id)
+      return next
+    })
+    setSelectedAvailable(new Set())
+  }
+
+  const removeAllFiltered = () => {
+    setEditSiteIds(prev => {
+      const next = new Set(prev)
+      for (const s of filteredAssigned) next.delete(s.id)
+      return next
+    })
+    setSelectedAssigned(new Set())
+  }
+
+  const saveEdit = async () => {
+    if (!editingUser) return
+    setUpdating(editingUser.id)
+    try {
+      await patchUser(editingUser.id, {
+        full_name: editFullName,
+        role: editRole,
+        status: editStatus,
+        siteIds: Array.from(editSiteIds),
+      })
+
+      setUsers(prev =>
+        prev.map(u =>
+          u.id === editingUser.id
+            ? {
+                ...u,
+                full_name: editFullName.trim() || null,
+                role: editRole,
+                status: editStatus,
+                ...(u.status !== editStatus
+                  ? { approved_by: currentUserId, approved_at: new Date().toISOString() }
+                  : {}),
+              }
+            : u
+        )
+      )
+      setEditOpen(false)
+      setEditingUser(null)
+      router.refresh()
+    } catch (e: any) {
+      console.error(e)
+      alert(e?.message || 'Failed to save changes')
+    } finally {
+      setUpdating(null)
+    }
+  }
+
+  const deleteUser = async (user: User) => {
+    if (user.id === currentUserId) {
+      alert('You cannot delete your own account')
+      return
+    }
+    const ok = window.confirm(`Delete ${user.full_name || user.email}? This cannot be undone.`)
+    if (!ok) return
+
+    setUpdating(user.id)
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(formatApiError(data, 'Failed to delete user'))
+      setUsers(prev => prev.filter(u => u.id !== user.id))
+      router.refresh()
+    } catch (e: any) {
+      console.error(e)
+      alert(e?.message || 'Failed to delete user')
+    } finally {
+      setUpdating(null)
+    }
+  }
 
   return (
     <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <div className="flex-1">
+          <Label htmlFor="user-search" className="text-gray-700">Search users</Label>
+          <Input
+            id="user-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email, role, status..."
+            className="mt-2 rounded-xl border-gray-200"
+          />
+        </div>
+        <div className="text-xs text-gray-500 mt-1 sm:mt-6">
+          Signed in as <span className="font-medium">{currentUserRole}</span>
+        </div>
+      </div>
+
       {/* Pending Users */}
       <div>
         <h2 className="text-lg sm:text-xl font-semibold mb-4 text-[#1e3a8a]">
@@ -121,6 +344,24 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
                     >
                       {updating === user.id ? '...' : 'Reject'}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEdit(user)}
+                      disabled={updating === user.id}
+                      className="flex-1 sm:flex-none border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl text-sm"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteUser(user)}
+                      disabled={updating === user.id || user.id === currentUserId}
+                      className="flex-1 sm:flex-none bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-sm"
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -157,20 +398,25 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
                     </p>
                   )}
                 </div>
-                <div className="flex items-center">
-                  <select
-                    value={user.role}
-                    onChange={(e) => {
-                      const newRole = e.target.value as UserRole
-                      updateUserStatus(user.id, 'approved', newRole)
-                    }}
-                    className="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20"
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openEdit(user)}
                     disabled={updating === user.id}
+                    className="border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
                   >
-                    <option value="staff">Staff</option>
-                    <option value="manager">Manager</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => deleteUser(user)}
+                    disabled={updating === user.id || user.id === currentUserId}
+                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl"
+                  >
+                    Delete
+                  </Button>
                 </div>
               </div>
             ))}
@@ -196,20 +442,263 @@ export function UserManagementClient({ initialUsers, currentUserId }: UserManage
                   <p className="font-medium text-gray-900 truncate">{user.full_name || user.email}</p>
                   <p className="text-sm text-gray-600 truncate">{user.email}</p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => updateUserStatus(user.id, 'approved')}
-                  disabled={updating === user.id}
-                  className="w-full sm:w-auto border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
-                >
-                  {updating === user.id ? '...' : 'Approve'}
-                </Button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => updateUserStatus(user.id, 'approved')}
+                    disabled={updating === user.id}
+                    className="w-full sm:w-auto border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
+                  >
+                    {updating === user.id ? '...' : 'Approve'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openEdit(user)}
+                    disabled={updating === user.id}
+                    className="w-full sm:w-auto border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => deleteUser(user)}
+                    disabled={updating === user.id || user.id === currentUserId}
+                    className="w-full sm:w-auto bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl"
+                  >
+                    Delete
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit user</DialogTitle>
+            <DialogDescription>
+              Update user details and project access. Admins/managers automatically have access to all projects.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingUser && (
+            <div className="space-y-4">
+              <div className="text-sm text-gray-600">
+                <div className="font-medium text-gray-900">{editingUser.email}</div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-full-name" className="text-gray-700">Full name</Label>
+                <Input
+                  id="edit-full-name"
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  placeholder="Full name"
+                  className="rounded-xl border-gray-200"
+                  disabled={updating === editingUser.id}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Role</Label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as UserRole)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20"
+                    disabled={updating === editingUser.id}
+                  >
+                    <option value="staff">Staff</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Status</Label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as UserStatus)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20"
+                    disabled={updating === editingUser.id}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700">Project access</Label>
+                {editRole === 'admin' || editRole === 'manager' ? (
+                  <div className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-xl p-3">
+                    This user is <span className="font-medium">{editRole}</span> and will have access to <span className="font-medium">all projects</span>.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {loadingAccess ? (
+                      <div className="text-sm text-gray-500 p-2">Loading access...</div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-stretch">
+                        <div className="border border-gray-200 rounded-xl p-2 bg-white flex flex-col">
+                          <div className="text-xs font-medium text-gray-700 px-1 pb-2">Available projects</div>
+                          <Input
+                            value={availableFilter}
+                            onChange={(e) => setAvailableFilter(e.target.value)}
+                            placeholder="Filter..."
+                            className="rounded-xl border-gray-200 mb-2"
+                            disabled={updating === editingUser.id}
+                          />
+                          <div className="flex-1 min-h-[180px] max-h-60 overflow-auto space-y-1">
+                            {filteredAvailable.length === 0 ? (
+                              <div className="text-sm text-gray-500 p-2">No items</div>
+                            ) : (
+                              filteredAvailable.map(site => (
+                                <label
+                                  key={site.id}
+                                  className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedAvailable.has(site.id)}
+                                    onChange={() =>
+                                      setSelectedAvailable(prev => {
+                                        const next = new Set(prev)
+                                        if (next.has(site.id)) next.delete(site.id)
+                                        else next.add(site.id)
+                                        return next
+                                      })
+                                    }
+                                    disabled={updating === editingUser.id}
+                                  />
+                                  <span className="text-sm text-gray-900">{site.name}</span>
+                                </label>
+                              ))
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-2 px-1">
+                            {filteredAvailable.length} shown
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col justify-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={moveToAssigned}
+                            disabled={updating === editingUser.id || selectedAvailable.size === 0}
+                            className="rounded-xl"
+                          >
+                            Add →
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={moveToAvailable}
+                            disabled={updating === editingUser.id || selectedAssigned.size === 0}
+                            className="rounded-xl"
+                          >
+                            ← Remove
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={assignAllFiltered}
+                            disabled={updating === editingUser.id || filteredAvailable.length === 0}
+                            className="rounded-xl"
+                          >
+                            Add all
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={removeAllFiltered}
+                            disabled={updating === editingUser.id || filteredAssigned.length === 0}
+                            className="rounded-xl"
+                          >
+                            Remove all
+                          </Button>
+                        </div>
+
+                        <div className="border border-gray-200 rounded-xl p-2 bg-white flex flex-col">
+                          <div className="text-xs font-medium text-gray-700 px-1 pb-2">Assigned projects</div>
+                          <Input
+                            value={assignedFilter}
+                            onChange={(e) => setAssignedFilter(e.target.value)}
+                            placeholder="Filter..."
+                            className="rounded-xl border-gray-200 mb-2"
+                            disabled={updating === editingUser.id}
+                          />
+                          <div className="flex-1 min-h-[180px] max-h-60 overflow-auto space-y-1">
+                            {filteredAssigned.length === 0 ? (
+                              <div className="text-sm text-gray-500 p-2">No items</div>
+                            ) : (
+                              filteredAssigned.map(site => (
+                                <label
+                                  key={site.id}
+                                  className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedAssigned.has(site.id)}
+                                    onChange={() =>
+                                      setSelectedAssigned(prev => {
+                                        const next = new Set(prev)
+                                        if (next.has(site.id)) next.delete(site.id)
+                                        else next.add(site.id)
+                                        return next
+                                      })
+                                    }
+                                    disabled={updating === editingUser.id}
+                                  />
+                                  <span className="text-sm text-gray-900">{site.name}</span>
+                                </label>
+                              ))
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-2 px-1">
+                            {filteredAssigned.length} shown
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="text-xs text-gray-500">
+                      Assigned: {editSiteIds.size}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditOpen(false)}
+              className="rounded-xl"
+              disabled={editingUser ? updating === editingUser.id : false}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={saveEdit}
+              className="rounded-xl bg-[#1e3a8a] hover:bg-[#1e40af] text-white"
+              disabled={!editingUser || (editingUser ? updating === editingUser.id : true)}
+            >
+              {editingUser && updating === editingUser.id ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
