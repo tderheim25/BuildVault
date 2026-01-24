@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,10 +32,11 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
 
   useEffect(() => {
     // Update selected project if initial projects change
+    setProjects(initialProjects)
     if (initialProjects.length > 0 && !selectedProject) {
       setSelectedProject(initialProjects[0].id)
     }
-    setProjects(initialProjects)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialProjects])
 
   const startCamera = async () => {
@@ -240,8 +242,8 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
           .getPublicUrl(filePath)
 
         // Insert photo record
-        const { error: insertError } = await supabase
-          .from('photos')
+        const { error: insertError } = await (supabase
+          .from('photos') as any)
           .insert({
             site_id: selectedProject,
             url: publicUrl,
@@ -287,14 +289,14 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
 
   return (
     <div className="max-w-[1600px] mx-auto">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 text-gradient">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-gradient">
           Capture Photos
         </h1>
-        <p className="text-gray-600 text-lg">Take photos with your camera or upload from device</p>
+        <p className="text-gray-600 text-base sm:text-lg">Take photos with your camera or upload from device</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Capture Area */}
         <div className="lg:col-span-2 space-y-6">
           {/* Project Selection */}
@@ -326,25 +328,25 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
           {!captureMode && (
             <Card className="dashboard-card">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-gray-900">Capture Method</CardTitle>
-                <CardDescription className="text-gray-600">Choose how you want to add photos</CardDescription>
+                <CardTitle className="text-lg sm:text-xl font-bold text-gray-900">Capture Method</CardTitle>
+                <CardDescription className="text-gray-600 text-sm sm:text-base">Choose how you want to add photos</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <Button
                     onClick={startCamera}
-                    className="h-32 flex-col gap-3 gradient-primary hover:opacity-90 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+                    className="h-24 sm:h-32 flex-col gap-2 sm:gap-3 gradient-primary hover:opacity-90 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
                   >
-                    <Camera className="h-8 w-8" />
-                    <span className="text-lg font-semibold">Open Camera</span>
+                    <Camera className="h-6 w-6 sm:h-8 sm:w-8" />
+                    <span className="text-base sm:text-lg font-semibold">Open Camera</span>
                   </Button>
                   <Button
                     onClick={() => fileInputRef.current?.click()}
                     variant="outline"
-                    className="h-32 flex-col gap-3 border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 rounded-xl transition-all duration-200"
+                    className="h-24 sm:h-32 flex-col gap-2 sm:gap-3 border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 rounded-xl transition-all duration-200"
                   >
-                    <Upload className="h-8 w-8 text-gray-600" />
-                    <span className="text-lg font-semibold text-gray-700">Upload Photos</span>
+                    <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-gray-600" />
+                    <span className="text-base sm:text-lg font-semibold text-gray-700">Upload Photos</span>
                   </Button>
                 </div>
                 <input
@@ -417,16 +419,18 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="text-center text-white">
                             <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm opacity-75">Click "Open Camera" to start</p>
+                            <p className="text-sm opacity-75">Click &quot;Open Camera&quot; to start</p>
                           </div>
                         </div>
                       )}
                     </>
                   ) : (
-                    <img
+                    <Image
                       src={capturedImage}
                       alt="Captured"
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                   )}
                 </div>
@@ -490,18 +494,20 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                   {uploadedFiles.map((file, index) => (
-                    <div key={index} className="relative group">
-                      <img
+                    <div key={index} className="relative group h-24 sm:h-32">
+                      <Image
                         src={URL.createObjectURL(file)}
                         alt={file.name}
-                        className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                        fill
+                        className="object-cover rounded-xl border border-gray-200"
+                        unoptimized
                       />
                       <button
                         type="button"
                         onClick={() => removeFile(index)}
-                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-sm transition-all opacity-0 group-hover:opacity-100"
+                        className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-xs sm:text-sm font-bold shadow-sm transition-all opacity-0 group-hover:opacity-100"
                       >
                         ×
                       </button>
@@ -534,14 +540,16 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
               {/* Photo Thumbnails */}
               {(capturedImage || capturedImages.length > 0 || uploadedFiles.length > 0) && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto p-2 -m-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 sm:max-h-64 overflow-y-auto p-2 -m-2">
                     {/* Current captured image */}
                     {capturedImage && (
                       <div className="relative aspect-square group">
-                        <img
+                        <Image
                           src={capturedImage}
                           alt="Current capture"
-                          className="w-full h-full object-cover rounded-lg border-2 border-indigo-500"
+                          fill
+                          className="object-cover rounded-lg border-2 border-indigo-500"
+                          unoptimized
                         />
                         <div className="absolute top-1 left-1 bg-indigo-500 text-white text-xs px-1.5 py-0.5 rounded font-semibold">
                           New
@@ -551,10 +559,12 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
                     {/* Gallery images */}
                     {capturedImages.map((img, index) => (
                       <div key={`gallery-${index}`} className="relative aspect-square group">
-                        <img
+                        <Image
                           src={img}
                           alt={`Captured ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg border border-gray-200"
+                          fill
+                          className="object-cover rounded-lg border border-gray-200"
+                          unoptimized
                         />
                         <div className="absolute top-1 left-1 bg-gray-800/70 text-white text-xs px-1.5 py-0.5 rounded font-semibold">
                           {index + 1}
@@ -564,10 +574,12 @@ export function CaptureClient({ initialProjects }: CaptureClientProps) {
                     {/* Uploaded files */}
                     {uploadedFiles.map((file, index) => (
                       <div key={`upload-${index}`} className="relative aspect-square group">
-                        <img
+                        <Image
                           src={URL.createObjectURL(file)}
                           alt={file.name}
-                          className="w-full h-full object-cover rounded-lg border border-gray-200"
+                          fill
+                          className="object-cover rounded-lg border border-gray-200"
+                          unoptimized
                         />
                         <div className="absolute top-1 left-1 bg-blue-500/70 text-white text-xs px-1.5 py-0.5 rounded font-semibold">
                           {capturedImages.length + index + (capturedImage ? 1 : 0) + 1}

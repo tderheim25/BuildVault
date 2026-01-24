@@ -19,11 +19,14 @@ export default async function AdminUsersPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.status !== 'approved') {
+  type ProfileData = { role: string; status: string; full_name: string | null; email: string } | null
+  const typedProfile = profile as ProfileData
+
+  if (!typedProfile || typedProfile.status !== 'approved') {
     redirect('/pending-approval')
   }
 
-  if (profile.role !== 'admin' && profile.role !== 'manager') {
+  if (typedProfile.role !== 'admin' && typedProfile.role !== 'manager') {
     redirect('/')
   }
 
@@ -36,17 +39,17 @@ export default async function AdminUsersPage() {
     .from('sites')
     .select('*', { count: 'exact', head: true })
 
-  const userName = profile.full_name || 'User'
-  const userEmail = profile.email || user.email || ''
+  const userName = typedProfile.full_name || 'User'
+  const userEmail = typedProfile.email || user.email || ''
 
   return (
-    <AppLayout userRole={profile.role} userName={userName} userEmail={userEmail} projectCount={totalSites || 0}>
+    <AppLayout userRole={typedProfile.role as 'admin' | 'manager' | 'staff'} userName={userName} userEmail={userEmail} projectCount={totalSites || 0}>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-[#1e3a8a]">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-[#1e3a8a]">
             User Management
           </h1>
-          <p className="text-gray-600 text-lg">Manage user accounts and approvals</p>
+          <p className="text-gray-600 text-base sm:text-lg">Manage user accounts and approvals</p>
         </div>
 
         <Card className="ios-card ios-shadow-lg">

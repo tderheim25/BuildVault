@@ -33,9 +33,13 @@ export default function NewProjectPage() {
           .eq('id', user.id)
           .single()
         if (profile) {
-          setUserRole(profile.role as 'admin' | 'manager' | 'staff')
-          setUserName(profile.full_name || 'User')
-          setUserEmail(profile.email || user.email || '')
+          type ProfileData = { role: string; full_name: string | null; email: string } | null
+          const typedProfile = profile as ProfileData
+          if (typedProfile) {
+            setUserRole(typedProfile.role as 'admin' | 'manager' | 'staff')
+            setUserName(typedProfile.full_name || 'User')
+            setUserEmail(typedProfile.email || user.email || '')
+          }
         }
 
         // Fetch project count
@@ -62,8 +66,8 @@ export default function NewProjectPage() {
         return
       }
 
-      const { error: insertError } = await supabase
-        .from('sites')
+      const { error: insertError } = await (supabase
+        .from('sites') as any)
         .insert({
           name,
           description: description || null,
@@ -85,11 +89,11 @@ export default function NewProjectPage() {
   return (
     <AppLayout userRole={userRole} userName={userName} userEmail={userEmail} projectCount={projectCount}>
       <div className="max-w-2xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-[#1e3a8a]">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-[#1e3a8a]">
             Create New Project
           </h1>
-          <p className="text-gray-600 text-lg">Add a new construction site/project</p>
+          <p className="text-gray-600 text-base sm:text-lg">Add a new construction site/project</p>
         </div>
         <Card className="ios-card ios-shadow-lg">
           <CardHeader>
@@ -138,16 +142,16 @@ export default function NewProjectPage() {
                 />
               </div>
             </CardContent>
-            <CardContent className="flex justify-end space-x-4 pt-6 border-t border-gray-100">
-              <Link href="/projects">
-                <Button type="button" variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl">
+            <CardContent className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:space-x-4 pt-6 border-t border-gray-100">
+              <Link href="/projects" className="w-full sm:w-auto">
+                <Button type="button" variant="outline" className="w-full sm:w-auto border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl">
                   Cancel
                 </Button>
               </Link>
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 ios-button"
+                className="w-full sm:w-auto bg-[#1e3a8a] hover:bg-[#1e40af] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 ios-button"
               >
                 {loading ? 'Creating...' : 'Create Project'}
               </Button>

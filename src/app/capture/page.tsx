@@ -18,7 +18,10 @@ export default async function CapturePage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.status !== 'approved') {
+  type ProfileData = { role: string; status: string; full_name: string | null; email: string } | null
+  const typedProfile = profile as ProfileData
+
+  if (!typedProfile || typedProfile.status !== 'approved') {
     redirect('/pending-approval')
   }
 
@@ -32,11 +35,11 @@ export default async function CapturePage() {
     .from('sites')
     .select('*', { count: 'exact', head: true })
 
-  const userName = profile.full_name || 'User'
-  const userEmail = profile.email || user.email || ''
+  const userName = typedProfile.full_name || 'User'
+  const userEmail = typedProfile.email || user.email || ''
 
   return (
-    <AppLayout userRole={profile.role} userName={userName} userEmail={userEmail} projectCount={totalSites || 0}>
+    <AppLayout userRole={typedProfile.role as 'admin' | 'manager' | 'staff'} userName={userName} userEmail={userEmail} projectCount={totalSites || 0}>
       <CaptureClient initialProjects={sites || []} />
     </AppLayout>
   )

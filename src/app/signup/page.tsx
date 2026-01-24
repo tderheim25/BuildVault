@@ -47,11 +47,11 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8 sm:py-12">
         <Card className="w-full max-w-md ios-card ios-shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-[#1e3a8a]">Registration Successful</CardTitle>
-            <CardDescription className="text-gray-600">Your account is pending approval</CardDescription>
+            <CardTitle className="text-xl sm:text-2xl text-[#1e3a8a]">Registration Successful</CardTitle>
+            <CardDescription className="text-gray-600 text-sm sm:text-base">Your account is pending approval</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-700 mb-6">
@@ -69,23 +69,23 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-[#1e3a8a] rounded-3xl shadow-sm mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-[#1e3a8a] rounded-3xl shadow-sm mb-4 sm:mb-6">
+            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold mb-3 text-[#1e3a8a]">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-3 text-[#1e3a8a]">
             Join BuildVault
           </h1>
-          <p className="text-gray-600 text-lg">Create your account to get started</p>
+          <p className="text-gray-600 text-base sm:text-lg">Create your account to get started</p>
         </div>
         <Card className="ios-card ios-shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-[#1e3a8a]">Sign Up</CardTitle>
-            <CardDescription className="text-gray-600">Create a new BuildVault account</CardDescription>
+            <CardTitle className="text-xl sm:text-2xl text-[#1e3a8a]">Sign Up</CardTitle>
+            <CardDescription className="text-gray-600 text-sm sm:text-base">Create a new BuildVault account</CardDescription>
           </CardHeader>
           <form onSubmit={handleSignup}>
             <CardContent className="space-y-5">

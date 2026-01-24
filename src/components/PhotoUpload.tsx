@@ -2,11 +2,15 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Database } from '@/types/database'
 import imageCompression from 'browser-image-compression'
+
+type PhotoInsert = Database['public']['Tables']['photos']['Insert']
 
 interface PhotoUploadProps {
   siteId: string
@@ -115,16 +119,17 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
           .getPublicUrl(filePath)
 
         // Insert photo record with optimized file size
+        const photoData = {
+          site_id: siteId,
+          url: publicUrl,
+          file_name: files[index].name, // Keep original filename
+          file_size: file.size, // Use optimized file size
+          mime_type: file.type, // Use optimized MIME type
+          uploaded_by: user.id,
+        } as PhotoInsert
         const { error: insertError } = await supabase
           .from('photos')
-          .insert({
-            site_id: siteId,
-            url: publicUrl,
-            file_name: files[index].name, // Keep original filename
-            file_size: file.size, // Use optimized file size
-            mime_type: file.type, // Use optimized MIME type
-            uploaded_by: user.id,
-          })
+          .insert(photoData as any)
 
         if (insertError) throw insertError
       })
@@ -164,11 +169,13 @@ export function PhotoUpload({ siteId, onUploadComplete }: PhotoUploadProps) {
           <p className="text-sm text-gray-600">{files.length} file(s) selected</p>
           <div className="grid grid-cols-4 gap-3">
             {files.map((file, index) => (
-              <div key={index} className="relative group">
-                <img
+              <div key={index} className="relative group h-24">
+                <Image
                   src={URL.createObjectURL(file)}
                   alt={file.name}
-                  className="w-full h-24 object-cover rounded-xl border border-gray-200 group-hover:border-[#1e3a8a]/50 transition-all"
+                  fill
+                  className="object-cover rounded-xl border border-gray-200 group-hover:border-[#1e3a8a]/50 transition-all"
+                  unoptimized
                 />
                 <button
                   type="button"

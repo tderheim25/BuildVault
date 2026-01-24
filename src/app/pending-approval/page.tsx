@@ -39,7 +39,9 @@ export default function PendingApprovalPage() {
       }
 
       if (profile) {
-        const profileStatus = profile.status as 'pending' | 'rejected' | 'approved'
+        type ProfileData = { status: string } | null
+        const typedProfile = profile as ProfileData
+        const profileStatus = (typedProfile?.status || 'pending') as 'pending' | 'rejected' | 'approved'
         setStatus(profileStatus)
         
         if (profileStatus === 'approved') {
@@ -64,11 +66,11 @@ export default function PendingApprovalPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8 sm:py-12">
       <Card className="w-full max-w-md ios-card ios-shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl text-[#1e3a8a]">Account Pending Approval</CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardTitle className="text-xl sm:text-2xl text-[#1e3a8a]">Account Pending Approval</CardTitle>
+          <CardDescription className="text-gray-600 text-sm sm:text-base">
             {status === 'rejected' 
               ? 'Your account has been rejected' 
               : status === 'approved'

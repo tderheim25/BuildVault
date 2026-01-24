@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface Photo {
@@ -45,10 +46,12 @@ export function PhotoGallery({ photos, onDelete, deletablePhotoIds }: PhotoGalle
               onClick={() => setSelectedPhoto(photo)}
             >
               <div className="w-full h-full relative rounded-xl overflow-hidden border border-gray-200 hover:border-[#1e3a8a]/50 transition-all duration-200 ios-shadow hover:shadow-md">
-                <img
+                <Image
                   src={photo.url}
                   alt={photo.file_name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-200"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
                 {canDelete && (
                   <button
@@ -72,19 +75,21 @@ export function PhotoGallery({ photos, onDelete, deletablePhotoIds }: PhotoGalle
 
       <Dialog open={!!selectedPhoto} onOpenChange={() => setSelectedPhoto(null)}>
         {selectedPhoto && (
-          <DialogContent className="max-w-4xl ios-card ios-shadow-lg">
+          <DialogContent className="max-w-4xl ios-card ios-shadow-lg mx-4 sm:mx-auto">
             <DialogHeader>
-              <DialogTitle className="text-[#1e3a8a]">{selectedPhoto.file_name}</DialogTitle>
+              <DialogTitle className="text-[#1e3a8a] text-base sm:text-lg break-words">{selectedPhoto.file_name}</DialogTitle>
             </DialogHeader>
-            <div className="relative w-full h-[60vh] rounded-xl overflow-hidden border border-gray-200">
-              <img
+            <div className="relative w-full h-[40vh] sm:h-[50vh] lg:h-[60vh] rounded-xl overflow-hidden border border-gray-200">
+              <Image
                 src={selectedPhoto.url}
                 alt={selectedPhoto.file_name}
-                className="w-full h-full object-contain"
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 90vw, 80vw"
               />
             </div>
             {selectedPhoto.description && (
-              <p className="text-sm text-gray-700 mt-4">{selectedPhoto.description}</p>
+              <p className="text-xs sm:text-sm text-gray-700 mt-3 sm:mt-4 break-words">{selectedPhoto.description}</p>
             )}
             <p className="text-xs text-gray-500 mt-2">
               Uploaded: {new Date(selectedPhoto.created_at).toLocaleString()}

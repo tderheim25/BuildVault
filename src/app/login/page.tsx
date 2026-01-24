@@ -76,23 +76,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f6fa] px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-[#f5f6fa] px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         {/* Logo/Brand Section */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 gradient-primary rounded-3xl shadow-lg mb-6">
-            <Building2 className="w-10 h-10 text-white" />
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 gradient-primary rounded-3xl shadow-lg mb-4 sm:mb-6">
+            <Building2 className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold mb-3 text-gradient">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-3 text-gradient">
             BuildVault
           </h1>
-          <p className="text-gray-600 text-lg">Construction Project Management</p>
+          <p className="text-gray-600 text-base sm:text-lg">Construction Project Management</p>
         </div>
 
         <Card className="dashboard-card dashboard-shadow-lg">
-          <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-semibold text-center text-gradient">Welcome Back</CardTitle>
-            <CardDescription className="text-center text-gray-600">
+          <CardHeader className="space-y-1 pb-4 sm:pb-6">
+            <CardTitle className="text-xl sm:text-2xl font-semibold text-center text-gradient">Welcome Back</CardTitle>
+            <CardDescription className="text-center text-gray-600 text-sm sm:text-base">
               Sign in to access your projects and manage your construction sites
             </CardDescription>
           </CardHeader>
@@ -187,7 +187,7 @@ export default function LoginPage() {
               </Button>
               
               <div className="text-sm text-center text-gray-600 pt-2">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link 
                   href="/signup" 
                   className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline transition-colors"
